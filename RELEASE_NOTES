@@ -1,6 +1,9 @@
 #
 # RELEASE_NOTES
 #
+R2.0.6  2024-11-15 Jeremy Lorelli
+    Update to timingApi/R0.9
+
 R1.1.9	2017-04-28	Bruce Hill
 	Moved to git and pdated for git workflow
 	Updated to event2 R4.2.0
