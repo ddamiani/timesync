@@ -57,7 +57,7 @@ int sync_cnt   = 200;
     } while (0)
 #define SYNC_ERROR(level, msg)     \
         if (SYNC_DEBUG(level)) {   \
-	    printTime(stdout);     \
+            printTime(stdout);     \
             printf msg;            \
             DebugPrint(dobj);      \
             fflush(stdout);        \
@@ -86,7 +86,7 @@ void SyncObject::SetGlobalParams(struct SyncGlobalParams *gnew)
         globs = *gnew;
     if (m_mode) {
         if (*m_mode) {
-	    printTime(stdout);
+            printTime(stdout);
             printf("Setting LCLS2 Synchronization parameters.\n");
             sync_retry  = globs.l2_retry;
             sync_future = globs.l2_future;
@@ -94,7 +94,7 @@ void SyncObject::SetGlobalParams(struct SyncGlobalParams *gnew)
             sync_vfar   = globs.l2_vfar;
             sync_notfar = globs.l2_notfar;
         } else {
-	    printTime(stdout);
+            printTime(stdout);
             printf("Setting LCLS1 Synchronization parameters.\n");
             sync_retry  = globs.l1_retry;
             sync_future = globs.l1_future;
@@ -151,7 +151,7 @@ int SyncObject::poll(void)
             delayfid = timingGetLastFiducial() - (int)(lastdelay + 0.5);
         }
         if (!dobj || CheckError(dobj)) {
-	    printTime(stdout);
+            printTime(stdout);
             printf("Timesync found error?\n");
             gen = -1;
             continue;
@@ -160,25 +160,25 @@ int SyncObject::poll(void)
         if ((m_gen && (gen != *m_gen || lastdelay != *m_delay)) || (mode != *m_mode)) {
             /* Either the timing info changed or the delay calculation changed
                or the timing mode changed, so force a resync! */
-	    printTime(stdout);
+            printTime(stdout);
             printf("gen = %d, *m_gen = %d, lastdelay = %lf, *m_delay = %lf, mode = %d, *m_mode = %d\n",
                    gen, *m_gen, lastdelay, *m_delay, mode, *m_mode);
             trigevent = *m_event;
             gen = *m_gen;
-	    printTime(stdout);
+            printTime(stdout);
             printf("Timesync Gen = %d\n", gen);
             SET_SYNC(0);
             if (mode != *m_mode) {
                 printTime(stdout);
-		printf("Switching to LCLS-%s mode!\n", *m_mode ? "II" : "I");
+                printf("Switching to LCLS-%s mode!\n", *m_mode ? "II" : "I");
                 mode = *m_mode;
                 SetGlobalParams(NULL);
             }
             if (eventvalid) {
                 eventvalid = trigevent > 0 && trigevent < 256;
-		printTime(stdout);
+                printTime(stdout);
                 if (eventvalid)
-		    printf("%s is setting event trigger to %d.\n", Name(), trigevent);
+                    printf("%s is setting event trigger to %d.\n", Name(), trigevent);
                 else
                     printf("%s has invalid event trigger %d!\n", Name(), trigevent);
                 DebugPrint(dobj);
@@ -202,13 +202,13 @@ int SyncObject::poll(void)
 
             if (SYNC_DEBUG(0)) {
                 printTime(stdout);
-		printf("%s resynchronizing at fiducial 0x%lu (delay=%lg).\n",
+                printf("%s resynchronizing at fiducial 0x%lu (delay=%lg).\n",
                        Name(), timingGetLastFiducial(), *m_delay);
             }
 
             if (gen != *m_gen) {
                 printTime(stdout);
-		printf("Generation change, restarting!\n");
+                printf("Generation change, restarting!\n");
                 continue;   /* Ow... a reconfigure while reconfiguring.  Just start over. */
             }
 
@@ -218,7 +218,7 @@ int SyncObject::poll(void)
             if (tsfid == TIMING_PULSEID_INVALID) { /* Sigh.  Restart if the fiducial is bad. */
                 if (SYNC_DEBUG(0)) {
                     printTime(stdout);
-		    printf("%s has bad fiducial at time %08x:%08x.\n", Name(),
+                    printf("%s has bad fiducial at time %08x:%08x.\n", Name(),
                            evt_info.fifo_time.secPastEpoch, evt_info.fifo_time.nsec);
                     fflush(stdout);
                 }
@@ -227,7 +227,7 @@ int SyncObject::poll(void)
 
             if (SYNC_DEBUG(1)) {
                 printTime(stdout);
-		printf("Got data: lastfid=%lu delayfid=%lu tsfid=%lu\n", timingGetLastFiducial(), delayfid, tsfid);
+                printf("Got data: lastfid=%lu delayfid=%lu tsfid=%lu\n", timingGetLastFiducial(), delayfid, tsfid);
                 fflush(stdout);
             }
 
@@ -243,14 +243,14 @@ int SyncObject::poll(void)
                 if (tsfid == TIMING_PULSEID_INVALID) {
                     if (SYNC_DEBUG(0)) {
                         printTime(stdout);
-			printf("%s resync sees a bad fiducial, restarting!\n", Name());
+                        printf("%s resync sees a bad fiducial, restarting!\n", Name());
                         fflush(stdout);
                     }
                     break;
                 }
                 if (SYNC_DEBUG(0)) {
                     printTime(stdout);
-		    printf("%s is moving back to timestamp fiducial 0x%lu at index %lu.\n",
+                    printf("%s is moving back to timestamp fiducial 0x%lu at index %lu.\n",
                            Name(), tsfid, idx);
                     fflush(stdout);
                 }
@@ -272,7 +272,7 @@ int SyncObject::poll(void)
                 /* This is just bad.  When in doubt, start over. */
                 if (SYNC_DEBUG(0)) {
                     printTime(stdout);
-		    printf("%s resync failed with timestamp fiducial 0x%lu, restarting!\n",
+                    printf("%s resync failed with timestamp fiducial 0x%lu, restarting!\n",
                            Name(), tsfid);
                     fflush(stdout);
                 }
@@ -285,7 +285,7 @@ int SyncObject::poll(void)
              */
             if (SYNC_DEBUG(0)) {
                 printTime(stdout);
-		printf("%s resync established with index %lu at timestamp fiducial 0x%lu at delayed fiducial 0x%lu.\n",
+                printf("%s resync established with index %lu at timestamp fiducial 0x%lu at delayed fiducial 0x%lu.\n",
                        Name(), idx, tsfid, delayfid);
                 DebugPrint(dobj);
                 fflush(stdout);
@@ -382,9 +382,9 @@ int SyncObject::poll(void)
                 if (abs(LCLS2_FID_DIFF(tsfid, delayfid)) < sync_notfar) {
                     do_print--;
                     if (SYNC_DEBUG(0)) {
-			printTime(stdout);
+                        printTime(stdout);
                         if (!do_print)
-			    printf("%s is fully resynched with index %lu at timestamp fiducial 0x%lu (0x%lu - %lg = 0x%lu).\n",
+                            printf("%s is fully resynched with index %lu at timestamp fiducial 0x%lu (0x%lu - %lg = 0x%lu).\n",
                                    Name(), idx, tsfid, timingGetLastFiducial(),
                                    *m_delay, delayfid);
                         else
@@ -403,7 +403,7 @@ int SyncObject::poll(void)
             } else {
                 if (SYNC_DEBUG_ALWAYS(2)) {
                     printTime(stdout);
-		    printf("%s ts fid=%lu, lastfid=%lu\n", Name(), tsfid, timingGetLastFiducial() );
+                    printf("%s ts fid=%lu, lastfid=%lu\n", Name(), tsfid, timingGetLastFiducial() );
                     fflush(stdout);
                 }
             }
@@ -419,10 +419,10 @@ int SyncObject::poll(void)
 
 
 // Debug stuff. 
-static const iocshArg	   syncdebugArg0	= { "level",	iocshArgInt };
-static const iocshArg	   syncdebugArg1	= { "count",	iocshArgInt };
-static const iocshArg	  *syncdebugArgs[2]	= { &syncdebugArg0, &syncdebugArg1 };
-static const iocshFuncDef  syncdebugFuncDef	= { "syncdebug", 2, syncdebugArgs };
+static const iocshArg      syncdebugArg0      = { "level",        iocshArgInt };
+static const iocshArg      syncdebugArg1      = { "count",        iocshArgInt };
+static const iocshArg      *syncdebugArgs[2]  = { &syncdebugArg0, &syncdebugArg1 };
+static const iocshFuncDef  syncdebugFuncDef   = { "syncdebug", 2, syncdebugArgs };
 static int  syncdebugCallFunc(const iocshArgBuf * args)
 {
     sync_debug = args[0].ival;
