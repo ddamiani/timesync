@@ -39,6 +39,7 @@ static size_t printTime(FILE *fp)
 
 int sync_debug = 2;
 int sync_cnt   = 200;
+#define LCLS1_FID_MASK       0x1ffff
 #define LCLS1_FID_MAX        0x1ffe0
 #define LCLS1_FID_ROLL_LO    0x00200
 #define LCLS1_FID_ROLL_HI    (LCLS1_FID_MAX-LCLS1_FID_ROLL_LO)
@@ -47,6 +48,7 @@ int sync_cnt   = 200;
 #define LCLS1_FID_DIFF(a,b)  ((LCLS1_FID_ROLL(b, a) ? LCLS1_FID_MAX : 0) + \
                               (int)(a) - (int)(b) - (LCLS1_FID_ROLL(a, b) ? LCLS1_FID_MAX : 0))
 #define LCLS2_FID_DIFF(a,b)  ((int)(((a)<LCLS1_FID_MAX&&(b)<LCLS1_FID_MAX)?LCLS1_FID_DIFF(a,b):((a)-(b))))
+#define EVTCODE_VALID(evtcode) (evtcode > 0 && evtcode < 256) || (evtcode >= 1000 && evtcode < 1012)
 #define SYNC_DEBUG(n)        (sync_debug > (n) && sync_cnt > 0 && --sync_cnt)
 #define SYNC_DEBUG_ALWAYS(n) (sync_debug > (n))
 #define SET_SYNC(v)                                   \
@@ -138,7 +140,7 @@ int SyncObject::poll(void)
     printTime(stdout);
     printf("Initial Gen = %d\n", gen);
     SET_SYNC(m_gen ? 0 : 1);
-    eventvalid = trigevent > 0 && trigevent < 256;
+    eventvalid = EVTCODE_VALID(trigevent);
 
     while(TRUE) {
         if (dobj)
@@ -175,7 +177,7 @@ int SyncObject::poll(void)
                 SetGlobalParams(NULL);
             }
             if (eventvalid) {
-                eventvalid = trigevent > 0 && trigevent < 256;
+                eventvalid = EVTCODE_VALID(trigevent);
                 printTime(stdout);
                 if (eventvalid)
                     printf("%s is setting event trigger to %d.\n", Name(), trigevent);
@@ -184,7 +186,7 @@ int SyncObject::poll(void)
                 DebugPrint(dobj);
                 fflush(stdout);
             } else {
-                eventvalid = trigevent > 0 && trigevent < 256;
+                eventvalid = EVTCODE_VALID(trigevent);
                 if (eventvalid) {
                     printTime(stdout);
                     printf("%s is setting event trigger to %d.\n", Name(), trigevent);
@@ -214,7 +216,7 @@ int SyncObject::poll(void)
 
             /* Get the current time! */
             status = timingFifoRead(trigevent, TS_INDEX_INIT, &idx, &evt_info);
-            tsfid = evt_info.fifo_fid;
+            tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
             if (tsfid == TIMING_PULSEID_INVALID) { /* Sigh.  Restart if the fiducial is bad. */
                 if (SYNC_DEBUG(0)) {
                     printTime(stdout);
@@ -239,7 +241,7 @@ int SyncObject::poll(void)
                  * Go back until we get an event before this time.
                  */
                 status = timingFifoRead(trigevent, -1, &idx, &evt_info);
-                tsfid = evt_info.fifo_fid;
+                tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
                 if (tsfid == TIMING_PULSEID_INVALID) {
                     if (SYNC_DEBUG(0)) {
                         printTime(stdout);
@@ -310,22 +312,22 @@ int SyncObject::poll(void)
             } else
                 incr = 1;
             status = timingFifoRead(trigevent, incr, &idx, &evt_info);
-            tsfid = evt_info.fifo_fid;
+            tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
 
             if (status || tsfid == TIMING_PULSEID_INVALID) {
                 uint64_t now;
                 timingFifoRead(trigevent, TS_INDEX_INIT, &now, &evt_info); /* Where are we? */
-                tsfid = evt_info.fifo_fid;
+                tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
                 if (now + 1 == idx) {
                     /* OK, we seem to be a tad early?!?  Just wait for it! */
                     do {
                         struct timespec req = {0, 1000000}; /* 1 ms */
                         nanosleep(&req, NULL);
                         timingFifoRead(trigevent, TS_INDEX_INIT, &now, &evt_info);
-                        tsfid = evt_info.fifo_fid;
+                        tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
                     } while (now + 1 == idx);
                     status = timingFifoRead(trigevent, 0, &idx, &evt_info);
-                    tsfid = evt_info.fifo_fid;
+                    tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
                 }
             }
             if (status) {
@@ -349,7 +351,7 @@ int SyncObject::poll(void)
                 }
                 while (!status && LCLS2_FID_DIFF(fid, tsfid) >= sync_vfar) {
                     status = timingFifoRead(trigevent, 1, &idx, &evt_info);
-                    tsfid = evt_info.fifo_fid;
+                    tsfid = evt_info.fifo_time.nsec & LCLS1_FID_MASK;
                 }
                 if (status) {
                     SYNC_ERROR(0, ("%s has an invalid timestamp, resynching (lastdata=0x%lu, fd=%d)!\n",
